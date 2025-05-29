@@ -49,6 +49,7 @@ class neatm(object):
         self.alpha = self.df_eph['alpha'][0].item()*u.deg  
 
     def subsolar_temp(self):
+        #Find the subsolar temperature using the NEATM model
         S_sun = const.L_sun / (4 * np.pi * ((1*u.au).to(u.m)**2))
         t_ss_u =  ((1-self.pv*self.phase_int) * S_sun / (self.bolo_emissivity * const.sigma_sb * self.eta * self.rh**2))**(1/4) 
         print(f'Subsolar temperature = {t_ss_u}')
@@ -59,6 +60,7 @@ class neatm(object):
 
 
     def neatm_integral(self,theta,phi):
+        #Calculate the NEATM integral over the Planck equation
         alpha = (self.alpha.to(u.rad)).value
         numerator = (np.cos(phi)**2) * np.cos(theta-alpha)
         if (theta >= alpha - np.pi/2) & (theta <= alpha + np.pi/2):
@@ -71,6 +73,8 @@ class neatm(object):
     
 
     def calcDiameter(self,flux):
+        #Calculate a diameter given a flux
+
         #Input flux in Jy - first convert from W/m^2/Hz to W/m^2/m (in place of W/m^2/um so that astropy.units can handle it)
         lamda_flux = flux.to(u.J/u.s/u.m**3, equivalencies=u.spectral_density(self.nu))
         
@@ -81,6 +85,7 @@ class neatm(object):
         print(f'Diameter = {diameter.to(u.km)}')
 
     def tempGas(self,vexp,gamma,mass):
+        #calculate the subsolar temperature given a gas expansion speed
         v = vexp.to(u.m/u.s)
         m = (mass / const.N_A).to(u.kg) 
 
@@ -88,6 +93,7 @@ class neatm(object):
         print(f'T = {self.tgas}')
 
     def gas_integral(self,theta,phi):
+        #Calculate the NEATM integral using a subsolar temperature from a gas expansion speed
         alpha = (self.alpha.to(u.rad)).value
         numerator = (np.cos(phi)**2) * np.cos(theta-alpha)
         if (theta >= alpha - np.pi/2) & (theta <= alpha + np.pi/2):
@@ -99,7 +105,7 @@ class neatm(object):
         return numerator/denominator
 
     def calcDiameterGas(self,flux,vexp,gamma,mass):
-
+        #Calculate the diameter given a flux and a gas expansion speed
         #Input flux in Jy - first convert from W/m^2/Hz to W/m^2/m (in place of W/m^2/um so that astropy.units can handle it)
         lamda_flux = flux.to(u.J/u.s/u.m**3, equivalencies=u.spectral_density(self.nu))
 
@@ -117,7 +123,7 @@ class neatm(object):
 
 
     def calcNucleusFlux(self,diameter):
-        
+        #Calculate nucleus flux given a diameter
         #Calculate the neatm integral
         neatm_int = dblquad(self.neatm_integral,0,np.pi/2,-np.pi/2,np.pi/2)
         flux = ( self.rad_emissivity * (diameter**2) * const.h * (const.c**2) * neatm_int[0]) / ( (self.delta**2) * (self.lamda**5) )
@@ -125,7 +131,8 @@ class neatm(object):
         print(f'Flux = {flux_jy:.3f}')
 
     def calcMassKappa(self,K,kappa,phi):
-
+        #Calculate a dust mass given an opacity and a value for K 
+        #Lellouch+2022, A&A, 659, L1, Eqns B1, B2 
         
         K_j = K.to(u.J/u.m**2)
 
@@ -140,7 +147,7 @@ class neatm(object):
         print(f'Mass = {m:.3e}')
 
     def calcDustFlux(self,mass,kappa):
-
+        #Calculate the dust flux given a dust mass and opacity
         if self.uncertainties:
             temp = 277 * (1 - self.pv.nominal_value * self.phase_int)**(1/4) / (self.rh)**0.5 * u.K
         else:
@@ -153,7 +160,7 @@ class neatm(object):
         return (flux.to(u.Jy))
     
     def calcMassFlux(self,flux,kappa):
-
+        #Calculate dust mass given a flux and opacity
         if self.uncertainties:
             temp = 277 * (1 - self.pv.nominal_value * self.phase_int)**(1/4) / (self.rh)**0.5 * u.K
         else:
