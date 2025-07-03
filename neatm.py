@@ -127,8 +127,8 @@ class neatm(object):
         #Calculate the neatm integral
         neatm_int = dblquad(self.neatm_integral,0,np.pi/2,-np.pi/2,np.pi/2)
         flux = ( self.rad_emissivity * ((diameter.to(u.m))**2) * const.h * (const.c**2) * neatm_int[0]) / ( (self.delta**2) * (self.lamda**5) )
-        flux_jy = flux.to(u.mJy,equivalencies=u.spectral_density(self.nu))
-        print(f'Flux = {flux_jy:.3f}')
+        flux_jy = flux.to(u.uJy,equivalencies=u.spectral_density(self.nu))
+        print(f'Flux = {flux_jy:.4f}')
 
     def calcMassKappa(self,K,kappa,phi):
         #Calculate a dust mass given an opacity and a value for K 
